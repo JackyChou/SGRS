@@ -1,0 +1,27 @@
+{% extends "GeneralReport/base_site.html" %}
+{% load i18n %}
+{% block userlinks %}
+{% trans 'Change password' %} / <a href="{% url 'auth_logout' %}">{% trans 'Log out' %}</a>{% endblock %}
+
+{% block branding %}
+<h1 id="site-name">Password change successful</h1>
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'SGRS_index' %}">{% trans 'Home' %}</a>
+&rsaquo; {% trans 'Password change' %}
+</div>
+{% endblock %}
+
+{% block title %}{% trans 'Password change successful' %}{% endblock %}
+
+{% block content %}
+
+<h1>{% trans 'Password change successful' %}</h1>
+
+<p>{% trans 'Your password was changed.' %}</p>
+
+<p><a href="{% url 'SGRS_index' %}">Home Page</a></p>
+
+{% endblock %}

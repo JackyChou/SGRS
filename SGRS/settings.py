@@ -110,3 +110,5 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 AUTH_USER_MODEL = 'GeneralReport.SGRSUser'
+
+LOGIN_URL = '/sgrs/login/'

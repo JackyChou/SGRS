@@ -1,0 +1,57 @@
+{% extends "GeneralReport/base_site.html" %}
+{% load i18n admin_static %}
+
+{% block extrastyle %}{{ block.super }}<link rel="stylesheet" type="text/css" href="{% static "admin/css/login.css" %}" />{% endblock %}
+
+{% block bodyclass %}login{% endblock %}
+
+{% block nav-global %}{% endblock %}
+
+{% block title %}Simple General Repost System{% endblock %}
+
+{% block content_title %}{% endblock %}
+
+{% block branding %}
+<h1 id="site-name">Simple General Repost System</h1>
+{% endblock %}
+
+{% block breadcrumbs %}{% endblock %}
+
+{% block content %}
+    {% if form.errors and not form.non_field_errors %}
+        <p class="errornote">
+            {% trans "Please correct the error below." %}
+        </p>
+    {% endif %}
+
+    {% if form.non_field_errors %}
+        {% for error in form.non_field_errors %}
+            <p class="errornote">
+                {{ error }}
+            </p>
+        {% endfor %}
+    {% endif %}
+
+    <div id="content-main">
+        <form method="post" id="login-form">{% csrf_token %}
+            <div class="form-row">
+                {{ form.username.errors }}
+                <label for="id_username" class="required">
+                    {{ form.username.label }}:
+                </label>
+                {{ form.username }}
+            </div>
+            <div class="form-row">
+                {{ form.password.errors }}
+                <label for="id_password" class="required">
+                    {% trans 'Password:' %}
+                </label>
+                {{ form.password }}
+            </div>
+            <div class="submit-row">
+                <label>&nbsp;</label>
+                <input type="submit" value="{% trans 'Log in' %}" />
+            </div>
+        </form>
+    </div>
+{% endblock %}
