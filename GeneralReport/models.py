@@ -1,9 +1,15 @@
 #coding:utf-8
 
+import json
+
 from django.db import models
+from django.db import connections
+from django.core.exceptions import ValidationError
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth.models import AbstractUser
+
+from GeneralReport.utils import replace_invalid_quote
 
 CONDITION_TYPES = [
     'choice',
@@ -42,6 +48,7 @@ class SGRSUser(AbstractUser):
     class Meta:
         app_label = 'GeneralReport'
         db_table = 'sgrs_user'
+        verbose_name_plural = verbose_name = _('SGRS User')
 
     def has_report_perm(self):
         pass
@@ -74,13 +81,21 @@ class ReportType(AbstractBaseModel):
         db_table = 'sgrs_report_type'
         ordering = ['name']
 
+    def __unicode__(self):
+        return u"%s" % (self.name)
+
 class ReportPermission(AbstractBaseModel):
     name = models.CharField(max_length=100, db_index=True, unique=True)
     description = models.TextField(blank=True)
     report_type = models.ForeignKey(ReportType, blank=True, null=True)
     db_conf = models.CharField(blank=True, verbose_name=_(u"DB_name"), max_length=128, choices=settings.DB_FOR_CHOICES)
-    SQL_conf = models.TextField(verbose_name=_(u"SQL语句"))
+    SQL_conf = models.TextField(verbose_name=_(u"SQL conf"))
     filter_conf = JsonField()
+
+    class Meta:
+        app_label = 'GeneralReport'
+        db_table = 'sgrs_report_permission'
+        ordering = ['report_type__name', 'name']
 
     def __unicode__(self):
         return u"%s | %s | %s" % (
@@ -119,7 +134,7 @@ class ReportPermission(AbstractBaseModel):
             if item_operate not in CONDITION_TYPE_OPERATE_MAP[item_type]:
                 raise ValidationError(u"%s only can use %s" %(item_type,CONDITION_TYPE_OPERATE_MAP[item_type]))
 
-        # check db_conf
+        # check db_conf whether in settings
         try:
             connections[self.db_conf]
         except:
@@ -133,23 +148,18 @@ class ReportPermission(AbstractBaseModel):
         if sql_condition_list != condition_keys:
             raise ValidationError(u"where clauses not match, filter_conf is %s, SQL_conf is %s"%(condition_keys,sql_condition_list))
 
-    class Meta:
-        app_label = 'GeneralReport'
-        db_table = 'sgrs_report_permission'
-        ordering = ['report_type__name', 'name']
-
 class ReportPermissionCombination(AbstractBaseModel):
     name = models.CharField(max_length=100, db_index=True)
     description = models.TextField(blank=True)
     report_permissions = models.ManyToManyField(ReportPermission, blank=True)
 
-    def __unicode__(self):
-        return self.name
-
     class Meta:
         app_label = 'GeneralReport'
         db_table = 'sgrs_report_permission_combination'
         ordering = ['id']
+
+    def __unicode__(self):
+        return self.name
 
 class SGRSRole(AbstractBaseModel):
     name = models.CharField(max_length=255, db_index=True, unique=True)
@@ -162,16 +172,20 @@ class SGRSRole(AbstractBaseModel):
         app_label = 'GeneralReport'
         db_table = 'sgrs_role'
         ordering = ['name']
-
-class SGRSUserAssignment(AbstractBaseModel):
-    #user = models.OneToOneField(SGRSUser, db_index=True)
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, db_index=True)
-    roles = models.ManyToManyField(SGRSRole)
+        verbose_name_plural = verbose_name = _('SGRS Role')
 
     def __unicode__(self):
-        return u'%s Role Assignment' %self.user
+        return self.name
+
+class SGRSUserAssignment(AbstractBaseModel):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, db_index=True)
+    roles = models.ManyToManyField(SGRSRole)
 
     class Meta:
         app_label = 'GeneralReport'
         db_table = 'sgrs_user_assignment'
         ordering = ['user']
+        verbose_name_plural = verbose_name = _('SGRS User Assignment')
+
+    def __unicode__(self):
+        return u'%s Role Assignment' %self.user

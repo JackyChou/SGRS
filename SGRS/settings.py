@@ -86,6 +86,9 @@ DATABASES = {
     }
 }
 
+DB_FOR_CHOICES = (
+    ('default',         u'test db',),
+)
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.8/topics/i18n/
@@ -105,7 +108,5 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.8/howto/static-files/
 
 STATIC_URL = '/static/'
-
-DB_FOR_CHOICES = ()
 
 AUTH_USER_MODEL = 'GeneralReport.SGRSUser'
