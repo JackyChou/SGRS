@@ -5,6 +5,8 @@ from django.conf.urls import patterns, include, url
 
 urlpatterns = patterns('GeneralReport.views',
     url(r'^$','index',name='SGRS_index'),
+    url(r'^report/(?P<report_key>[\w\-]+)/?$','report',name='report'),
+    url(r'^combreport/(?P<comb_id>[\d]+)/?$','combreport',name='combreport'),
 
     url(r'^login/?$','login',name='auth_login'),
     url(r'^logout/$','logout',name='auth_logout'),

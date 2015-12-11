@@ -1,6 +1,7 @@
 #coding:utf-8
 
 from django.shortcuts import render
+from django.http import Http404
 from django.http import HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext
@@ -37,7 +38,7 @@ def index(request):
     # combination report
     report_comb_info_list = []
     for comb_obj in report_comb_perm_list:
-        comb_url = request.build_absolute_uri('/sgrs/comb/%s' %comb_obj.id)
+        comb_url = request.build_absolute_uri('/sgrs/combreport/%s' %comb_obj.id)
         comb_info = ObjectDict(
             name = comb_obj.name,
             desc = comb_obj.description,
@@ -52,6 +53,14 @@ def index(request):
     }
 
     return render(request, 'GeneralReport/index.html', data)
+
+@login_required
+def report(request, report_key):
+    raise Http404("to be continue")
+
+@login_required
+def combreport(request, comb_id):
+    raise Http404("to be continue")
 
 def login(request):
     form = AuthenticationForm()
