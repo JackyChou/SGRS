@@ -50,17 +50,31 @@ class SGRSUser(AbstractUser):
         db_table = 'sgrs_user'
         verbose_name_plural = verbose_name = _('SGRS User')
 
-    def has_report_perm(self):
-        pass
+    def has_report_perm(self, perm):
+        result = False
+        if not self.is_anonymous():
+            check_perm = None
+            usable_report_perm = self.get_all_report_permissions()
+            if isinstance(perm, ReportPermission):
+                check_perm = perm
+            else:
+                if ReportPermission.objects.filter(name=perm).exists():
+                    check_perm = ReportPermission.objects.get(name=perm)
+            if check_perm and (check_perm in usable_report_perm):
+                result = True
+        return result
 
     def get_all_roles(self):
-        pass
+        return SGRSRole.objects.filter(
+            sgrsuserassignment__user=self).order_by('id')
 
     def get_all_report_permissions(self):
-        pass
+        return ReportPermission.objects.filter(
+            sgrsrole__in=self.get_all_roles()).order_by('id')
 
     def get_all_report_combination_permissions(self):
-        pass
+        return ReportPermissionCombination.objects.filter(
+            sgrsrole__in=self.get_all_roles()).order_by('id')
 
 class AbstractBaseModel(models.Model):
     touch_date = models.DateTimeField(editable=False, auto_now_add=True)

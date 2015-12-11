@@ -93,6 +93,13 @@ class ReportPermissionCombinationModelTest(TestCase):
             len(saved_perm_comb.report_permissions.all()),
             len(perm_comb.report_permissions.all())
         )
+        sort_key_function = lambda x:x.id
+        self.assertEqual(
+            sorted(saved_perm_comb.report_permissions.all(),
+                key=sort_key_function),
+            sorted(perm_comb.report_permissions.all(),
+                key=sort_key_function)
+        )
 
 class SGRSUserAndSGRSRoleModelTest(TestCase):
 
@@ -246,3 +253,232 @@ class SGRSUserAssignmentModelTest(TestCase):
         self.assertEqual(
             saved_second_user_assignment.roles, second_user_assignment.roles)
 
+class SGRSUserModelFunctionTest(TestCase):
+
+    def test_function_get_all_roles(self):
+        first_user = UserCreationForm(
+            data = dict(
+                username = 'first_user',
+                password1 = '123456',
+                password2 = '123456',
+            )
+        ).save()
+
+        second_user = UserCreationForm(
+            data = dict(
+                username = 'second_user',
+                password1 = '654321',
+                password2 = '654321',
+            )
+        ).save()
+
+        first_role = SGRSRole(
+            name = 'first_role',
+            description = 'first role for test',
+            can_download = True,
+        )
+        first_role.save()
+
+        second_role = SGRSRole(
+            name = 'second_role',
+            description = 'second role for test',
+            can_download = True,
+        )
+        second_role.save()
+
+        first_user_assignment = SGRSUserAssignment(user = first_user)
+        first_user_assignment.save()
+        first_user_assignment.roles = [second_role, first_role]
+        first_user_assignment.save()
+
+        second_user_assignment = SGRSUserAssignment(user = second_user)
+        second_user_assignment.save()
+        second_user_assignment.roles = [first_role, ]
+        second_user_assignment.save()
+
+        sort_key_function = lambda x:x.id
+        self.assertEqual(
+            sorted(first_user_assignment.roles.all(),key = sort_key_function),
+            sorted(first_user.get_all_roles(),key = sort_key_function)
+        )
+        self.assertEqual(
+            sorted(second_user_assignment.roles.all(),key = sort_key_function),
+            sorted(second_user.get_all_roles(),key = sort_key_function)
+        )
+
+    def test_function_get_all_report_permissions(self):
+        first_user = UserCreationForm(
+            data = dict(
+                username = 'first_user',
+                password1 = '123456',
+                password2 = '123456',
+            )
+        ).save()
+
+        first_role = SGRSRole(
+            name = 'first_role',
+            description = 'first role for test',
+            can_download = True,
+        )
+        first_role.save()
+
+        first_perm = ReportPermission(
+            name = 'first-perm',
+            description = 'first perm',
+            db_conf = 'default',
+            SQL_conf = """
+                SELECT count(*) FROM tablename
+            """,
+            filter_conf = '{}',
+        )
+        first_perm.save()
+        first_role.report_permissions = [first_perm,]
+        first_role.save()
+
+        second_role = SGRSRole(
+            name = 'second_role',
+            description = 'second role for test',
+            can_download = True,
+        )
+        second_role.save()
+
+        second_perm = ReportPermission(
+            name = 'second-perm',
+            description = 'second perm',
+            db_conf = 'default',
+            SQL_conf = """
+                SELECT count(*) FROM tablename
+            """,
+            filter_conf = '{}',
+        )
+        second_perm.save()
+        second_role.report_permissions = [second_perm,]
+        second_role.save()
+
+        first_user_assignment = SGRSUserAssignment(user = first_user)
+        first_user_assignment.save()
+        first_user_assignment.roles = [first_role, second_role]
+        first_user_assignment.save()
+
+        sort_key_function = lambda x:x.id
+        self.assertEqual(
+            sorted(ReportPermission.objects.filter(
+                    sgrsrole__in=[first_role, second_role]),
+                key=sort_key_function),
+            sorted(first_user.get_all_report_permissions(),
+                key=sort_key_function)
+        )
+
+    def test_function_get_all_report_combination_permissions(self):
+        first_user = UserCreationForm(
+            data = dict(
+                username = 'first_user',
+                password1 = '123456',
+                password2 = '123456',
+            )
+        ).save()
+
+        first_role = SGRSRole(
+            name = 'first_role',
+            description = 'first role for test',
+            can_download = True,
+        )
+        first_role.save()
+
+        first_perm = ReportPermission(
+            name = 'first-perm',
+            description = 'first perm',
+            db_conf = 'default',
+            SQL_conf = """
+                SELECT count(*) FROM tablename
+            """,
+            filter_conf = '{}',
+        )
+        first_perm.save()
+
+        second_perm = ReportPermission(
+            name = 'second-perm',
+            description = 'second perm',
+            db_conf = 'default',
+            SQL_conf = """
+                SELECT count(*) FROM tablename
+            """,
+            filter_conf = '{}',
+        )
+        second_perm.save()
+
+        perm_comb = ReportPermissionCombination(
+            name = 'first_perm_comb',
+            description = 'first perm comb',
+        )
+        perm_comb.save()
+        perm_comb.report_permissions = [first_perm, second_perm]
+        perm_comb.save()
+
+        first_role.report_permission_combinations = [perm_comb,]
+        first_role.save()
+
+        first_user_assignment = SGRSUserAssignment(user = first_user)
+        first_user_assignment.save()
+        first_user_assignment.roles = [first_role, ]
+        first_user_assignment.save()
+
+        sort_key_function = lambda x:x.id
+        self.assertEqual(
+            sorted(ReportPermissionCombination.objects.filter(
+                    sgrsrole__in=[first_role, ]),
+                key=sort_key_function),
+            sorted(first_user.get_all_report_combination_permissions(),
+                key=sort_key_function)
+        )
+
+    def test_function_has_report_perm(self):
+        first_user = UserCreationForm(
+            data = dict(
+                username = 'first_user',
+                password1 = '123456',
+                password2 = '123456',
+            )
+        ).save()
+
+        first_role = SGRSRole(
+            name = 'first_role',
+            description = 'first role for test',
+            can_download = True,
+        )
+        first_role.save()
+
+        first_perm = ReportPermission(
+            name = 'first-perm',
+            description = 'first perm',
+            db_conf = 'default',
+            SQL_conf = """
+                SELECT count(*) FROM tablename
+            """,
+            filter_conf = '{}',
+        )
+        first_perm.save()
+
+        second_perm = ReportPermission(
+            name = 'second-perm',
+            description = 'second perm',
+            db_conf = 'default',
+            SQL_conf = """
+                SELECT count(*) FROM tablename
+            """,
+            filter_conf = '{}',
+        )
+        second_perm.save()
+
+        first_role.report_permissions = [first_perm,]
+        first_role.save()
+
+        first_user_assignment = SGRSUserAssignment(user = first_user)
+        first_user_assignment.save()
+        first_user_assignment.roles = [first_role, ]
+        first_user_assignment.save()
+
+        self.assertEqual(first_user.has_report_perm(first_perm), True)
+        self.assertEqual(first_user.has_report_perm('first-perm'), True)
+        self.assertEqual(first_user.has_report_perm(second_perm), False)
+        self.assertEqual(first_user.has_report_perm('second-perm'), False)
