@@ -1,12 +1,88 @@
 #coding:utf-8
 
+import copy
+
 from django import forms
+from django.contrib.admin import widgets
 from django.contrib.auth import get_user_model
-from django.db.models import Q
-from django.utils.translation import ugettext, ugettext_lazy as _
+from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth.forms import ReadOnlyPasswordHashField
 
 from GeneralReport.models import SGRSUser
+
+TYPE_FIELD_MAP = {
+    'choice'   : forms.ChoiceField,
+    'mchoice'  : forms.MultipleChoiceField,
+    'text'     : forms.CharField,
+    'date'     : forms.DateTimeField,
+    'datetime' : forms.DateTimeField,
+}
+
+TYPE_WIDGET_MAP = {
+    'choice'   : forms.Select,
+    'mchoice'  : forms.CheckboxSelectMultiple,
+    'text'     : forms.TextInput(),
+    'date'     : widgets.AdminDateWidget(),
+    'datetime' : widgets.AdminSplitDateTime(),
+}
+
+class DynamicForm(forms.Form):
+    '''dynamic form class'''
+    def __init__(self, *args, **kwargs):
+        need_upload_file = copy.deepcopy(kwargs.get('need_upload_file'))
+        del kwargs['need_upload_file']
+        dynamic_fields = copy.deepcopy(kwargs.get('dynamic_fields'))
+        del kwargs['dynamic_fields']
+        super(DynamicForm, self).__init__(*args, **kwargs)
+        if need_upload_file is True:
+            # just for upload file
+            self.fields['file'] = forms.FileField(label = u"Upload File")
+        if dynamic_fields:
+            d_field_list = dynamic_fields.keys()
+            d_field_list.sort()
+            for d_field in d_field_list:
+                d_field_info = dynamic_fields[d_field]
+                field_class = TYPE_FIELD_MAP.get(d_field_info['type'],None)
+
+                if field_class is None:
+                    continue
+
+                label = d_field_info['name']
+                required = True if str(d_field_info['required']) == '1' else False
+                widget = TYPE_WIDGET_MAP[d_field_info['type']]
+                choices = d_field_info['value']
+
+                kwargs = dict(
+                    label = label,
+                    required = required,
+                    widget = widget,
+                )
+                if d_field_info['type'] in ['choice','mchoice']:
+                    kwargs.update(
+                        choices = choices,
+                    )
+
+                self.fields[d_field] = field_class(**kwargs)
+        if need_upload_file is not True:
+            # just for query
+            # paging option
+            self.fields['use_paging'] = forms.BooleanField(
+                required = False,
+                label = u"paging",
+                widget = forms.CheckboxInput,
+            )
+            self.fields['page_size'] = forms.CharField(
+                required = False,
+                initial = 50,
+                label = u"page size",
+                widget = forms.TextInput(),
+            )
+            # perview SQL
+            self.fields['preview'] = forms.BooleanField(
+                required = False,
+                label = u"perview SQL(not execute SQL)",
+                widget = forms.CheckboxInput,
+            )
 
 class UserChangeForm(forms.ModelForm):
     username = forms.RegexField(
