@@ -9,8 +9,6 @@ from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth.models import AbstractUser
 
-from GeneralReport.utils import replace_invalid_quote
-
 CONDITION_TYPES = [
     'choice',
     'mchoice',
@@ -27,6 +25,16 @@ CONDITION_TYPE_OPERATE_MAP = {
     'date'    : ['=','<','<=','>','>='],
     'datetime': ['=','<','<=','>','>='],
 }
+
+def replace_invalid_quote(input_str):
+    """
+    Replace single quote,chinese single quote,chinese double quote
+    """
+    input_str = input_str.replace(u"‘","'")
+    input_str = input_str.replace(u"’","'")
+    input_str = input_str.replace(u"”",'"')
+    input_str = input_str.replace(u"“",'"')
+    return input_str
 
 class JsonField(models.TextField):
     __metaclass__ = models.SubfieldBase
