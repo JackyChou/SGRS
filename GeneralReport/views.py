@@ -15,6 +15,7 @@ from django.contrib.auth import login as auth_login, logout as auth_logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.forms import PasswordChangeForm
 from django.core.cache import cache
+from django.conf import settings
 
 from GeneralReport.utils import ObjectDict
 from GeneralReport.utils import parse_sql
@@ -173,9 +174,9 @@ def report(request, report_key):
             # split query_data
             query_data = query_data[(page_num - 1) * page_size: page_num * page_size]
 
-    #if query_data and can_download:
-    #    download_file_url = request.build_absolute_uri( \
-    #        '/sgrs/download/%s' %(download_file_name))
+    if query_data and can_download:
+        download_file_url = request.build_absolute_uri( \
+            '/sgrs/download/%s' %(download_file_name))
 
     # edit entry for admin
     edit_permission_url = ''
@@ -215,8 +216,9 @@ def download_file(request, filename):
                     break
 
     # check permission
+    # filename : username_perm_timestamp.xls
     user = request.user
-    report_key = filename.split('.')[0].split('_')[-2] #username_perm_timestamp.xls
+    report_key = filename.split('.')[0].split('_')[-2]
 
     if not user.has_report_perm(report_key):
         return HttpResponseRedirect(reverse('SGRS_index'))

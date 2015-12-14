@@ -123,3 +123,8 @@ STATIC_URL = '/static/'
 AUTH_USER_MODEL = 'GeneralReport.SGRSUser'
 
 LOGIN_URL = '/sgrs/login/'
+
+import time, datetime
+CLEAN_TMP_FILE_TIMESTAMP = int(time.mktime(
+    (datetime.date.today() - datetime.timedelta(days=1)).timetuple()
+))

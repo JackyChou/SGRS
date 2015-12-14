@@ -129,6 +129,25 @@ def run_sql(db_name,sql):
     query_data, query_header = dictfetchall(db_cur)
     return query_data, query_header
 
+def parse_output_conf(query_data,output_conf):
+    """
+    Convert format
+    """
+    output_data = []
+    header_data = []
+    field_order = []
+    for item in output_conf:
+        header_data.append(item.values()[0])
+        field_order.append(item.keys()[0])
+
+    for data in query_data:
+        tmp_data_list = []
+        for field in field_order:
+            tmp_data = str(data[field.encode('utf8')]) if data[field.encode('utf8')] is not None else ''
+            tmp_data_list.append(tmp_data)
+        output_data.append(tmp_data_list)
+    return output_data, header_data
+
 def parse_sql(user,filter_conf,db_conf,sql_conf,form=None,preview=False):
     """
     Parse sql and return Query Results
@@ -141,7 +160,9 @@ def parse_sql(user,filter_conf,db_conf,sql_conf,form=None,preview=False):
     if not preview:
         query_data, query_header = run_sql(db_conf,sql_conf)
 
-    return query_data, query_header, sql_conf
+    output_data, header_data  = parse_output_conf(query_data,query_header)
+
+    return output_data, header_data, sql_conf
 
 def parse_dynamic_form(filter_conf,data=None,files=None,need_upload_file=False):
     dynamic_fields = dict()
