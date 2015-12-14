@@ -90,6 +90,16 @@ DB_FOR_CHOICES = (
     ('default',         u'test db',),
 )
 
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'query_result_cache',
+        'KEY_PREFIX': 'SGRS',
+        'TIMEOUT':60 * 30,
+        'MAX_ENTRIES':100,
+    }
+}
+
 # Internationalization
 # https://docs.djangoproject.com/en/1.8/topics/i18n/
 
@@ -107,6 +117,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.8/howto/static-files/
 
+STATIC_ROOT = os.path.join(BASE_DIR, "static")
 STATIC_URL = '/static/'
 
 AUTH_USER_MODEL = 'GeneralReport.SGRSUser'

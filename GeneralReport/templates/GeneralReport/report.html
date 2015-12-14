@@ -1,0 +1,133 @@
+{% extends "GeneralReport/base_site.html" %}
+{% load i18n admin_urls admin_static admin_modify %}
+
+{% block extrahead %}
+    <script type="text/javascript" src="/admin/jsi18n/"></script>
+    <script type="text/javascript" src="/static/admin/js/core.js"></script>
+    <script type="text/javascript" src="/static/admin/js/admin/RelatedObjectLookups.js"></script>
+    <script type="text/javascript" src="/static/admin/js/jquery.js"></script>
+    <script type="text/javascript" src="/static/admin/js/jquery.init.js"></script><!--rename jQuery to django.jQuery-->
+    <script type="text/javascript" src="/static/admin/js/actions.js"></script>
+    <script type="text/javascript" src="/static/admin/js/SelectBox.js"></script>
+    <script type="text/javascript" src="/static/admin/js/SelectFilter2.js"></script>
+    <script type="text/javascript" src="/static/admin/js/calendar.js"></script>
+    <script type="text/javascript" src="/static/admin/js/admin/DateTimeShortcuts.js"></script>
+    <script type="text/javascript">
+    (function($){
+        $(function() {
+            $("h2.SQL-title").css("cursor","pointer")
+                .click(function () {
+                    $("div#SQL-div-"+this.id).slideToggle();
+            });
+        });
+    })(jQuery || django.jQuery);
+    (function($){
+        $(function() {
+            $("h2.query-data-title").css("cursor","pointer")
+                .click(function () {
+                    $("div#query-data-div-"+this.id).toggle();
+            });
+        });
+    })(jQuery || django.jQuery);
+    </script>
+{% endblock %}
+
+{% block extrastyle %}{{ block.super }}
+    <link rel="stylesheet" type="text/css" href="{% static "admin/css/forms.css" %}" />
+    <link rel="stylesheet" type="text/css" href="{% static "GeneralReport/css/report_table.css" %}">
+{% endblock %}
+
+{% block coltype %}colM{% endblock %}
+
+{% block bodyclass %}change-form{% endblock %}
+
+{% block title %}Simple General Repost System{% endblock %}
+
+{% block branding %}
+<h1 id="site-name">{{perm_desc}}</h1>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+
+<form method = 'post' enctype="multipart/form-data">
+    {% csrf_token %}
+    <fieldset class="module aligned">
+        <h2>Query Option</h2>
+        {% for field in filter_form %}
+            {% if field.name != 'preview'%}
+                {% include "GeneralReport/filter_field.html" %}
+            {% else %}
+                {% if user.is_staff %}
+                    {% include "GeneralReport/filter_field.html" %}
+                {% endif %}
+            {% endif %}
+        {% endfor %}
+        <div class="form-row">
+            <input type="submit" value = "Commit" />
+        </div>
+        {% if user.is_staff%}
+            <div class="form-row">
+                <a href={{edit_permission_url}} target="_blank">Edit</a>
+            </div>
+        {% endif %}
+    </fieldset>
+</form>
+
+{% if paging_urls %}
+    {% include "GeneralReport/paging_urls.html" %}
+{% endif %}
+
+{% if query_data %}
+<fieldset class="module preview">
+    <h2 class="query-data-title" id="{{ report_key }}">Query Data</h2>
+    <div id="query-data-div-{{ report_key }}">
+        <div class="form-row">
+            Total:{{ query_data_total }}&nbsp;&nbsp;
+            Current:{{ query_data|length }}&nbsp;&nbsp;
+            {% if can_download %}
+            <button onclick="location.href='{{download_file_url}}'" class="btn">DownLoad</button>
+            {% endif %}
+        </div>
+        <table class="altrowstable" id="alternatecolor">
+            <tr class="throwcolor">
+                {% for header_field in header_data %}
+                    <th nowrap="nowrap">{{header_field}}</th>
+                {% endfor %}
+            </tr>
+            {% for data in query_data  %}
+                <tr class="{% cycle 'evenrowcolor' 'oddrowcolor' %}">
+                    {% for field in data %}
+                        <td>{{field}}</td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+        </table>
+    </div>
+</fieldset>
+{% endif %}
+{% if not query_data and header_data %}
+<fieldset class="module preview">
+    <div class="form-row errors">
+        <div class="field-box errors">
+            No data
+        </div>
+    </div>
+</fieldset>
+{% endif %}
+
+{% if paging_urls %}
+    {% include "GeneralReport/paging_urls.html" %}
+{% endif %}
+
+{% if user.is_staff and sql %}
+<div>
+    <fieldset class="module preview">
+        <h2 class="SQL-title" id="{{ report_key }}">SQL</h2>
+        <div class="form-row" id="SQL-div-{{ report_key }}"><code><pre>{{ sql }}</pre></code></div>
+    </fieldset>
+</div>
+{% endif %}
+
+</div>
+{% endblock %}

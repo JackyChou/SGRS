@@ -1,0 +1,9 @@
+<div class="form-row">
+    {% for page_info in paging_urls %}
+        {% if page_info.link %}
+            <a href="{{ page_info.url }}">{{ page_info.page_num }}</a>
+        {% else %}
+            {{ page_info.page_num }}
+        {% endif %}
+    {% endfor %}
+</div>
