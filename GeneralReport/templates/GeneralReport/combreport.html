@@ -1,0 +1,115 @@
+{% extends "GeneralReport/base_site.html" %}
+{% load i18n admin_urls admin_static admin_modify %}
+
+{% block extrahead %}
+    <script type="text/javascript" src="/admin/jsi18n/"></script>
+    <script type="text/javascript" src="/static/admin/js/core.js"></script>
+    <script type="text/javascript" src="/static/admin/js/admin/RelatedObjectLookups.js"></script>
+    <script type="text/javascript" src="/static/admin/js/jquery.js"></script>
+    <script type="text/javascript" src="/static/admin/js/jquery.init.js"></script><!--rename jQuery to django.jQuery-->
+    <script type="text/javascript" src="/static/admin/js/actions.js"></script>
+    <script type="text/javascript" src="/static/admin/js/SelectBox.js"></script>
+    <script type="text/javascript" src="/static/admin/js/SelectFilter2.js"></script>
+    <script type="text/javascript" src="/static/admin/js/calendar.js"></script>
+    <script type="text/javascript" src="/static/admin/js/admin/DateTimeShortcuts.js"></script>
+    <script type="text/javascript">
+    (function($){
+        $(function() {
+            $("h2.SQL-title").css("cursor","pointer")
+                .click(function () {
+                    $("div#SQL-div-"+this.id).toggle();
+            }).click();
+        });
+    })(jQuery || django.jQuery);
+    (function($){
+        $(function() {
+            $("h2.query-data-title").css("cursor","pointer")
+                .click(function () {
+                    $("div#query-data-div-"+this.id).toggle();
+            });
+        });
+    })(jQuery || django.jQuery);
+    </script>
+{% endblock %}
+
+{% block extrastyle %}
+    {{ block.super }}
+    <link rel="stylesheet" type="text/css" href="{% static "admin/css/forms.css" %}" />
+    <link rel="stylesheet" type="text/css" href="{% static "stats_app/css/report_table.css" %}">
+{% endblock %}
+
+{% block coltype %}colM{% endblock %}
+
+{% block bodyclass %}change-form{% endblock %}
+
+{% block title %}Simple General Repost System{% endblock %}
+
+{% block branding %}
+<h1 id="site-name">combreport {{combreport_name}}</h1>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+
+    <form method = 'post' enctype="multipart/form-data">
+        {% csrf_token %}
+        <fieldset class="module aligned">
+            <h2>Query Option</h2>
+            {% for field in filter_form %}
+                {% if field.name != 'use_paging' and field.name != 'page_size' and field.name != 'preview' %}
+                    {% include "GeneralReport/filter_field.html" %}
+                {% endif %}
+            {% endfor %}
+            <div class="form-row">
+                <input type="submit" value = "Commit" />
+            </div>
+        </fieldset>
+    </form>
+
+    {% for comb_report_item in comb_report_result %}
+        <fieldset class="module preview">
+            <h2 class="query-data-title" id="{{comb_report_item.per_name}}">{{ comb_report_item.per_desc }}</h2>
+            <div id="query-data-div-{{comb_report_item.per_name}}">
+                {% if comb_report_item.error_info %}
+                    <div class="form-row errors">
+                        <div class="field-box errors">
+                            {{comb_report_item.error_info}}
+                        </div>
+                    </div>
+                {% else %}
+                    {% if comb_report_item.query_data %}
+                        <table class="altrowstable" id="alternatecolor">
+                            <tr class="throwcolor">
+                                {% for header_field in comb_report_item.header_data %}
+                                    <th nowrap="nowrap">{{header_field}}</th>
+                                {% endfor %}
+                            </tr>
+                            {% for data in comb_report_item.query_data  %}
+                                <tr class="{% cycle 'evenrowcolor' 'oddrowcolor' %}">
+                                    {% for field in data %}
+                                        <td>{{field}}</td>
+                                    {% endfor %}
+                                </tr>
+                            {% endfor %}
+                        </table>
+                    {% else %}
+                        <div class="form-row errors">
+                            <div class="field-box errors">
+                                No data
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endif %}
+
+                {% if user.is_staff %}
+                <h2 class="SQL-title" id="{{comb_report_item.per_name}}">SQL</h2>
+                <div class="form-row" id="SQL-div-{{comb_report_item.per_name}}"><code><pre>{{ comb_report_item.sql }}</pre></code></div>
+                <div class="form-row"><a href={{ comb_report_item.edit_permission_url }} target="_blank">Edit</a></div>
+                {% endif %}
+            </div>
+        </fieldset>
+        <br/><br/><br/>
+    {% endfor %}
+
+</div>
+{% endblock %}

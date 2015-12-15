@@ -21,7 +21,7 @@ from GeneralReport.utils import ObjectDict
 from GeneralReport.utils import parse_sql
 from GeneralReport.utils import parse_dynamic_form
 from GeneralReport.utils import create_download_file
-from GeneralReport.models import ReportPermission
+from GeneralReport.models import ReportPermission, ReportPermissionCombination
 
 @login_required
 def index(request):
@@ -201,7 +201,63 @@ def report(request, report_key):
 
 @login_required
 def combreport(request, comb_id):
-    raise Http404("to be continue")
+    user = request.user
+
+    # check permission
+    comb_report_list = user.get_all_report_combination_permissions()
+    if comb_id not in [str(item.id) for item in comb_report_list]:
+        return HttpResponseRedirect(reverse('SGRS_index'))
+
+    comb_report_obj = ReportPermissionCombination.objects.get(id=comb_id)
+    report_perm_list = comb_report_obj.report_permissions.all().order_by('id')
+    group_filter_conf = {}
+    for item in report_perm_list:
+        tmp_filter_conf = json.loads(item.filter_conf)
+        if len(tmp_filter_conf) > len(group_filter_conf):
+            group_filter_conf = tmp_filter_conf
+
+    form = parse_dynamic_form(
+        group_filter_conf,
+        data = request.POST.copy() if request.method == 'POST' else None
+    )
+
+    comb_report_result = []
+    if form.is_valid():
+        for report_perm_obj in report_perm_list:
+            filter_conf = json.loads(report_perm_obj.filter_conf)
+            db_conf = report_perm_obj.db_conf
+            sql_conf = report_perm_obj.SQL_conf
+
+            sql = ''
+            query_data = []
+            header_data = []
+            error_info = ''
+
+            try:
+                query_data, header_data, sql = parse_sql(user,filter_conf,
+                    db_conf,sql_conf,form=form,preview=False)
+            except:
+                error_info = u'Error, please contact the administrator.'
+
+            edit_permission_url = request.build_absolute_uri('/admin/GeneralReport/reportpermission/%s' % report_perm_obj.id) if user.is_staff else ''
+
+            tmp_perm_result = ObjectDict(
+                per_name = report_perm_obj.name,
+                per_desc = report_perm_obj.description,
+                sql = sql,
+                query_data = query_data,
+                header_data = header_data,
+                error_info = error_info,
+                edit_permission_url = edit_permission_url,
+            )
+            comb_report_result.append(tmp_perm_result)
+
+    data = {
+        'combreport_name':comb_report_obj.name,
+        'filter_form':form,
+        'comb_report_result':comb_report_result,
+    }
+    return render(request, 'GeneralReport/combreport.html', data)
 
 @login_required
 def download_file(request, filename):
