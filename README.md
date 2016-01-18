@@ -188,4 +188,42 @@
 
 ## 功能权限配置示例 ##
 
-待续
+1. 统计超级用户数量
+    - `SQL_conf`
+
+            SELECT count(*) FROM sgrs_user WHERE {{c1}};
+
+    - `filter_conf` 
+
+            {
+                "c1": {
+                    "field": "is_superuser",
+                    "name":"superuser",
+                    "required": "0",
+                    "type": "choice",
+                    "value": [
+                        ["","No matter"],
+                        ["True","Yes"],
+                        ["False","No"]
+                    ],
+                    "operate": "="
+                }
+            }
+
+2. 根据用户名搜索
+    - `SQL_conf`
+
+            SELECT id,username FROM sgrs_user WHERE {{c1}};
+
+    - `filter_conf` 
+
+            {
+                "c1": {
+                    "field": "username",
+                    "name":"username",
+                    "required": "0",
+                    "type": "text",
+                    "operate": "like"
+                }
+            }
+
